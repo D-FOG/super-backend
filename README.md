@@ -179,6 +179,8 @@ npm run start      # Run the compiled production server
 Auth routes live under `/api/v1/auth`.
 
 ```txt
+GET  /auth/seed-admin
+POST /auth/seed-admin
 POST /auth/register
 POST /auth/login
 POST /auth/refresh
@@ -193,6 +195,15 @@ Authorization: Bearer <accessToken>
 ```
 
 Default registered users receive the `Cluster Member` role. Administrative access is tied to `Cluster Supervisor`.
+
+Local development seed accounts are disabled when `NODE_ENV=production`.
+
+```txt
+Seed admin browser URL:  http://localhost:5000/api/v1/auth/seed-admin
+Seed admin login:        admin@example.com / Admin123!
+Seed leader browser URL: http://localhost:5000/api/v1/leader-applications/seed-leader
+Seed leader login:       leader@example.com / Leader123!
+```
 
 ## API Domains
 

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { Router } from "express";
-import { DEFAULT_ROLE, type RoleName } from "../../constants/roles";
+import { DEFAULT_ROLE, ROLES, type RoleName } from "../../constants/roles";
 import { requireAuth } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
 import { sendSuccess } from "../../utils/apiResponse";
@@ -11,6 +11,31 @@ import { User } from "../users/user.model";
 import { loginSchema, refreshSchema, registerSchema } from "./auth.validation";
 
 const router = Router();
+
+const seedAdmin = asyncHandler(async (_req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    throw new ApiError(403, "Seed endpoint is disabled in production.", "FORBIDDEN");
+  }
+
+  const existing = await User.findOne({ email: "admin@example.com" });
+  if (existing) {
+    sendSuccess(res, "Seed admin already exists.", { user: existing });
+    return;
+  }
+
+  const user = await User.create({
+    name: "Seed Admin",
+    email: "admin@example.com",
+    password: "Admin123!",
+    roles: [ROLES.CLUSTER_SUPERVISOR],
+    trainingLevel: "Lead Ready",
+    certificationLevel: "Cluster Leader"
+  });
+
+  sendSuccess(res, "Seed admin created.", { user });
+});
+
+router.route("/seed-admin").get(seedAdmin).post(seedAdmin);
 
 type AuthUserShape = {
   _id: unknown;
