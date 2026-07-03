@@ -7,6 +7,8 @@ const clusterCenterSchema = new Schema(
     state: { type: String, trim: true },
     country: { type: String, trim: true },
     leaderContact: { type: String, trim: true },
+    meetingSchedule: { type: String, trim: true },
+    timeRange: { type: String, trim: true },
     coordinates: {
       latitude: { type: Number },
       longitude: { type: Number }

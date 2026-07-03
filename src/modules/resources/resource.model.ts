@@ -6,7 +6,7 @@ const resourceSchema = new Schema(
     title: { type: String, required: true, trim: true },
     category: { type: String, trim: true },
     description: { type: String, trim: true },
-    type: { type: String, enum: ["Video", "PDF", "MP3", "video", "pdf", "audio"], required: true },
+    type: { type: String, enum: ["Video", "PDF", "MP3", "Image", "video", "pdf", "audio", "image"], required: true },
     fileUrl: { type: String, required: true },
     visibleTo: { type: [String], enum: ROLE_VALUES, default: [] },
     uploadedBy: { type: Schema.Types.ObjectId, ref: "User", required: true }

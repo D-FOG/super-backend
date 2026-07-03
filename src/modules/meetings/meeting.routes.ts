@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { requireAdmin } from "../../middlewares/auth";
+import { LEADER_ROLES } from "../../constants/roles";
+import { requireAdmin, requireRole } from "../../middlewares/auth";
 import { crudRouter } from "../../utils/crudRouter";
 import { combineDateAndTime, isWithinWindow } from "../../utils/time";
 import { objectIdSchema } from "../../utils/schema";
@@ -17,8 +18,8 @@ const router = crudRouter({
   name: "Meetings",
   createSchema: z.object({ body }),
   updateSchema: z.object({ params: z.object({ id: objectIdSchema }), body: body.partial() }),
-  createAuth: [requireAdmin],
-  updateAuth: [requireAdmin],
+  createAuth: [requireRole(...LEADER_ROLES)],
+  updateAuth: [requireRole(...LEADER_ROLES)],
   deleteAuth: [requireAdmin],
   populate: ["clusterCenterId"]
 });

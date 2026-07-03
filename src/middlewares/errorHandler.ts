@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
+import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import mongoose from "mongoose";
 import { ZodError } from "zod";
 import { env } from "../config/env";
@@ -28,6 +29,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     statusCode = 400;
     code = "VALIDATION_ERROR";
     message = "Invalid identifier supplied.";
+  } else if (err instanceof TokenExpiredError || err instanceof JsonWebTokenError) {
+    statusCode = 401;
+    code = "UNAUTHORIZED";
+    message = "Authentication is invalid or expired.";
   } else if (err instanceof Error) {
     message = err.message;
   }

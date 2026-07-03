@@ -27,7 +27,7 @@ partnerApplicationsRouter.post("/", validate(z.object({ body: z.object({
   sendSuccess(res, "Partner application submitted.", application, 201);
 }));
 
-partnerApplicationsRouter.get("/", requireAdmin, asyncHandler(async (req, res) => {
+partnerApplicationsRouter.get("/", requireRole(...LEADER_ROLES), asyncHandler(async (req, res) => {
   const { items, meta } = await paginate(PartnerApplication, {}, req, ["userId", "reviewedBy"]);
   sendSuccess(res, "Partner applications loaded.", { data: items, meta });
 }));
@@ -41,7 +41,7 @@ partnerApplicationsRouter.get("/:id", validate(z.object({ params: z.object({ id:
   sendSuccess(res, "Partner application loaded.", application);
 }));
 
-partnerApplicationsRouter.patch("/:id/status", requireAdmin, validate(z.object({
+partnerApplicationsRouter.patch("/:id/status", requireRole(...LEADER_ROLES), validate(z.object({
   params: z.object({ id: objectIdSchema }),
   body: z.object({ status: z.enum(["Approved", "Rejected"]), reviewNote: z.string().optional() })
 })), asyncHandler(async (req, res) => {

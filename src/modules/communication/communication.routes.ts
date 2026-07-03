@@ -35,7 +35,7 @@ prayerRouter.delete("/:id", requireRole(ROLES.CLUSTER_SUPERVISOR), validate(z.ob
 
 export const projectUpdateRouter = Router();
 projectUpdateRouter.use(requireAuth);
-const updateBody = z.object({ title: z.string().min(2), body: z.string().min(1), projectId: objectIdSchema });
+const updateBody = z.object({ title: z.string().min(2), body: z.string().min(1), projectId: objectIdSchema.optional() });
 projectUpdateRouter.get("/", asyncHandler(async (req, res) => {
   const { items, meta } = await paginate(ProjectUpdate, {}, req, ["author", "projectId"]);
   sendSuccess(res, "Project updates loaded.", { data: items, meta });
