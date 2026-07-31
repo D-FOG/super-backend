@@ -67,3 +67,30 @@ export async function sendLeaderApplicationSubmittedEmail(email: string) {
     text: message
   });
 }
+
+export async function sendPaymentReceiptEmail(input: {
+  email: string;
+  fullName: string;
+  purpose: string;
+  category: string;
+  amount: number;
+  currency: string;
+  txRef: string;
+  downloadUrls?: string[];
+}) {
+  const downloads = input.downloadUrls?.length
+    ? `<p>Your digital resources:</p><ul>${input.downloadUrls.map((url) => `<li><a href="${url}">Download resource</a></li>`).join("")}</ul>`
+    : "";
+  const nextSteps = input.category === "Mentorship"
+    ? "A member of our mentorship team will contact you with the next steps."
+    : input.category === "Cluster Registration"
+      ? "Our leadership team will contact you regarding your onboarding."
+      : "Thank you for partnering with what God is doing.";
+  const message = `Thank you, ${input.fullName}. Your payment for ${input.purpose} was successful. Transaction: ${input.txRef}. Amount: ${input.currency} ${input.amount.toFixed(2)}. ${nextSteps}`;
+  return sendEmail({
+    to: input.email,
+    subject: `Payment receipt — ${input.purpose}`,
+    html: `<p>${message}</p>${downloads}`,
+    text: `${message}${input.downloadUrls?.length ? ` Downloads: ${input.downloadUrls.join(", ")}` : ""}`
+  });
+}

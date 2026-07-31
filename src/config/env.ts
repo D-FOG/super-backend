@@ -18,7 +18,16 @@ const envSchema = z.object({
   STORAGE_PROVIDER: z.enum(["local", "cloudinary"]).default("local"),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
-  CLOUDINARY_API_SECRET: z.string().optional()
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  MAIL_PROVIDER: z.enum(["placeholder", "zeptomail"]).default("placeholder"),
+  MAIL_FROM: z.string().email().optional(),
+  ZEPTO_MAIL_ENDPOINT: z.string().url().optional(),
+  ZEPTO_MAIL_AUTH_PREFIX: z.string().optional(),
+  ZEPTO_MAIL_TOKEN: z.string().optional(),
+  FLW_SECRET_KEY: z.string().optional(),
+  FLW_WEBHOOK_SECRET: z.string().optional(),
+  FLW_REDIRECT_URL: z.string().url().optional(),
+  FLW_ALLOWED_CURRENCIES: z.string().default("NGN,USD,GBP,EUR")
 });
 
 const parsed = envSchema.safeParse(process.env);

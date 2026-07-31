@@ -25,6 +25,7 @@ import socialLinkRoutes from "../modules/social-links/socialLink.routes";
 import uploadRoutes from "../modules/uploads/upload.routes";
 import communicationRoutes, { prayerRouter, projectUpdateRouter } from "../modules/communication/communication.routes";
 import userRoutes from "../modules/users/user.routes";
+import paymentRoutes from "../modules/payments/payment.routes";
 
 export function registerRoutes(app: Express): void {
   const base = env.API_PREFIX;
@@ -57,4 +58,5 @@ export function registerRoutes(app: Express): void {
   app.use(`${base}/notifications`, notificationRoutes);
   app.use(`${base}/admin`, adminRoutes);
   app.use(`${base}/uploads`, uploadRoutes);
+  app.use(`${base}/payments`, paymentRoutes);
 }
