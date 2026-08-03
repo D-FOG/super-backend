@@ -4,6 +4,19 @@ export const PAYMENT_CATEGORIES = [
   "Mentorship", "Cluster Registration", "School of Purpose Training", "Kingdom Store", "Offerings", "Tithes", "Donations", "Street Business Support", "Mission Projects", "Partnerships"
 ] as const;
 
+export const DONATION_CAUSES = [
+  "Evangelism",
+  "Discipleship",
+  "Leadership Development",
+  "Missions",
+  "Children's Ministry",
+  "Media Ministry",
+  "Community Outreach",
+  "General Ministry Support"
+] as const;
+
+export const MINISTRY_DONATION_PRESETS = [5000, 10000, 25000, 50000, 100000] as const;
+
 export const PAYMENT_CURRENCIES = ["NGN", "USD", "GBP", "EUR"] as const;
 export type PaymentCategory = (typeof PAYMENT_CATEGORIES)[number];
 export type PaymentCurrency = (typeof PAYMENT_CURRENCIES)[number];

@@ -8,7 +8,7 @@ import { sendSuccess } from "../../utils/apiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendPaymentReceiptEmail } from "../../utils/mail";
 import { paginate } from "../../utils/pagination";
-import { PAYMENT_CATEGORIES, PAYMENT_CURRENCIES, Payment, PaymentCoupon, PaymentProduct } from "./payment.model";
+import { DONATION_CAUSES, PAYMENT_CATEGORIES, PAYMENT_CURRENCIES, Payment, PaymentCoupon, PaymentProduct } from "./payment.model";
 
 const router = Router();
 const categorySchema = z.enum(PAYMENT_CATEGORIES);
@@ -82,9 +82,15 @@ router.post("/initialize", validate(z.object({ body: initializeBody })), asyncHa
   const product = input.productId ? await PaymentProduct.findOne({ _id: input.productId, isActive: true }) : null;
   if (input.productId && !product) throw new ApiError(404, "Payment item was not found.", "NOT_FOUND");
   if (product && product.category !== input.category) throw new ApiError(400, "Payment item does not match category.", "VALIDATION_ERROR");
+  if (input.category === "Donations" && !DONATION_CAUSES.includes(input.donationCause as typeof DONATION_CAUSES[number])) {
+    throw new ApiError(400, "Choose a valid ministry donation cause.", "INVALID_DONATION_CAUSE");
+  }
+  if (input.category === "Donations" && input.currency !== "NGN") {
+    throw new ApiError(400, "Ministry donations are accepted in NGN.", "INVALID_CURRENCY");
+  }
   const configuredPrice = product?.prices.find((price) => price.currency === input.currency)?.amount;
   const isDonation = ["Donations", "Offerings", "Tithes", "Partnerships", "Street Business Support", "Mission Projects"].includes(input.category);
-  const baseAmount = configuredPrice ?? (isDonation ? input.amount : undefined);
+  const baseAmount = input.category === "Donations" ? input.amount : configuredPrice ?? (isDonation ? input.amount : undefined);
   if (!baseAmount || baseAmount <= 0) throw new ApiError(400, "Select a configured price or enter a valid donation amount.", "INVALID_AMOUNT");
   const { coupon, discountAmount } = await applyCoupon(input.couponCode, input.productId, baseAmount, input.currency);
   const expectedAmount = Number((baseAmount - discountAmount).toFixed(2));
@@ -96,7 +102,7 @@ router.post("/initialize", validate(z.object({ body: initializeBody })), asyncHa
     return;
   }
   const redirectUrl = env.FLW_REDIRECT_URL || `${req.protocol}://${req.get("host")}/payments`;
-  const provider = await flutterwaveFetch("/payments", { method: "POST", body: JSON.stringify({ tx_ref: txRef, amount: expectedAmount, currency: input.currency, redirect_url: redirectUrl, customer: { email: input.customer.email, name: input.customer.fullName, phonenumber: input.customer.phone }, meta: { payment_id: String(payment._id), category: input.category, purpose: payment.purpose }, ...(product?.recurring && product.flutterwavePaymentPlanId ? { payment_plan: product.flutterwavePaymentPlanId } : {}), customizations: { title: "Supersite Citizens Kingdom Payments", description: payment.purpose } }) });
+  const provider = await flutterwaveFetch("/payments", { method: "POST", body: JSON.stringify({ tx_ref: txRef, amount: expectedAmount, currency: input.currency, redirect_url: redirectUrl, customer: { email: input.customer.email, name: input.customer.fullName, phonenumber: input.customer.phone }, meta: { payment_id: String(payment._id), category: input.category, purpose: payment.purpose, ...(input.donationCause ? { donation_cause: input.donationCause } : {}) }, ...(product?.recurring && product.flutterwavePaymentPlanId ? { payment_plan: product.flutterwavePaymentPlanId } : {}), customizations: { title: "Supersite Citizens Kingdom Payments", description: payment.purpose } }) });
   sendSuccess(res, "Flutterwave checkout initialized.", { payment: { id: payment._id, txRef, expectedAmount, currency: input.currency }, paymentLink: provider.data?.link });
 }));
 
