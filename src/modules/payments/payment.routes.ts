@@ -96,9 +96,8 @@ router.post("/initialize", validate(z.object({ body: initializeBody })), asyncHa
     throw new ApiError(400, "Ministry donations are accepted in NGN.", "INVALID_CURRENCY");
   }
   const configuredPrice = product?.prices.find((price) => price.currency === input.currency)?.amount;
-  const isDonation = ["Donations", "Offerings", "Tithes", "Partnerships", "Street Business Support", "Mission Projects"].includes(input.category);
-  const baseAmount = input.category === "Donations" ? input.amount : configuredPrice ?? (isDonation ? input.amount : undefined);
-  if (!baseAmount || baseAmount <= 0) throw new ApiError(400, "Select a configured price or enter a valid donation amount.", "INVALID_AMOUNT");
+  const baseAmount = input.category === "Donations" ? input.amount : configuredPrice ?? input.amount;
+  if (!baseAmount || baseAmount <= 0) throw new ApiError(400, "Select a configured price or enter a valid payment amount.", "INVALID_AMOUNT");
   const { coupon, discountAmount } = await applyCoupon(input.couponCode, input.productId, baseAmount, input.currency);
   const expectedAmount = Number((baseAmount - discountAmount).toFixed(2));
   const txRef = `SC-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
