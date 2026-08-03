@@ -57,15 +57,22 @@ async function fulfillPayment(paymentId: string, providerPayload: Record<string,
   const payment = await Payment.findById(paymentId).populate("productId");
   if (!payment) throw new ApiError(404, "Payment was not found.", "NOT_FOUND");
   if (!payment.customer) throw new ApiError(500, "Payment customer information is missing.", "PAYMENT_DATA_ERROR");
-  if (payment.status === "Successful") return payment;
   const product = payment.productId as unknown as { downloadUrls?: string[] } | undefined;
-  payment.status = "Successful";
-  payment.fulfilledAt = new Date();
-  payment.providerPayload = providerPayload;
-  await payment.save();
-  if (payment.couponId) await PaymentCoupon.findByIdAndUpdate(payment.couponId, { $inc: { usageCount: 1 } });
+  if (payment.status !== "Successful") {
+    payment.status = "Successful";
+    payment.fulfilledAt = new Date();
+    payment.providerPayload = providerPayload;
+    await payment.save();
+    if (payment.couponId) await PaymentCoupon.findByIdAndUpdate(payment.couponId, { $inc: { usageCount: 1 } });
+  }
+  if (payment.receiptSentAt) return payment;
+
   const receipt = await sendPaymentReceiptEmail({ email: payment.customer.email, fullName: payment.customer.fullName, purpose: payment.purpose, category: payment.category, amount: payment.expectedAmount, currency: payment.currency, txRef: payment.txRef, ...(product?.downloadUrls ? { downloadUrls: product.downloadUrls } : {}) });
-  if (receipt.ok) await Payment.findByIdAndUpdate(payment._id, { receiptSentAt: new Date() });
+  const receiptUpdate = receipt.ok
+    ? { receiptSentAt: new Date(), receiptLastAttemptAt: new Date(), $unset: { receiptError: 1 } }
+    : { receiptLastAttemptAt: new Date(), receiptError: receipt.error || `Email provider returned ${receipt.status || "an unknown error"}.` };
+  await Payment.findByIdAndUpdate(payment._id, receiptUpdate);
+  if (!receipt.ok) console.error("[payment:receipt] delivery failed", { paymentId: String(payment._id), txRef: payment.txRef, error: receipt.error, status: receipt.status });
   return payment;
 }
 

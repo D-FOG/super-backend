@@ -69,7 +69,9 @@ const paymentSchema = new Schema({
   status: { type: String, enum: ["Initialized", "Pending", "Successful", "Failed", "Cancelled", "Refunded"], default: "Initialized", index: true },
   providerPayload: { type: Schema.Types.Mixed, default: {} },
   fulfilledAt: Date,
-  receiptSentAt: Date
+  receiptSentAt: Date,
+  receiptLastAttemptAt: Date,
+  receiptError: { type: String, trim: true }
 }, { timestamps: true });
 
 paymentSchema.index({ category: 1, status: 1, createdAt: -1 });

@@ -1,3 +1,5 @@
+import { env } from "../config/env";
+
 type MailPayload = {
   to: string;
   subject: string;
@@ -5,37 +7,61 @@ type MailPayload = {
   text?: string;
 };
 
-export async function sendEmail(payload: MailPayload) {
-  const provider = process.env.MAIL_PROVIDER || "placeholder";
+type MailResult = {
+  ok: boolean;
+  provider: string;
+  status?: number;
+  error?: string;
+};
+
+function responseError(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { message?: unknown; error?: unknown };
+    const message = parsed.message || parsed.error;
+    if (typeof message === "string") return message.slice(0, 500);
+  } catch {
+    // A plain-text provider response is still useful when diagnosing delivery.
+  }
+  return body.trim().slice(0, 500) || "ZeptoMail did not provide an error message.";
+}
+
+export async function sendEmail(payload: MailPayload): Promise<MailResult> {
+  const provider = env.MAIL_PROVIDER;
 
   if (provider === "zeptomail") {
-    const endpoint = process.env.ZEPTO_MAIL_ENDPOINT || "https://api.zeptomail.com/v1.1/email";
-    const token = process.env.ZEPTO_MAIL_TOKEN;
-    if (!endpoint || !token) {
-      console.warn("ZeptoMail is not configured. Skipping email send.");
-      return { ok: false, provider, reason: "missing-config" };
+    const endpoint = env.ZEPTO_MAIL_ENDPOINT || "https://api.zeptomail.com/v1.1/email";
+    const token = env.ZEPTO_MAIL_TOKEN;
+    if (!token) {
+      const error = "ZEPTO_MAIL_TOKEN is not configured.";
+      console.error("[mail:zeptomail] delivery failed", { to: payload.to, error });
+      return { ok: false, provider, error };
     }
 
-    const fromAddress = process.env.MAIL_FROM || "hello@supersitecitizens.org";
-    const authPrefix = process.env.ZEPTO_MAIL_AUTH_PREFIX || "Zoho-enczapikey";
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `${authPrefix} ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: {
-          address: fromAddress
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `${env.ZEPTO_MAIL_AUTH_PREFIX || "Zoho-enczapikey"} ${token}`,
+          "Content-Type": "application/json"
         },
-        to: [{ email_address: { address: payload.to } }],
-        subject: payload.subject,
-        htmlbody: payload.html,
-        textbody: payload.text || payload.html.replace(/<[^>]*>/g, "")
-      })
-    });
+        body: JSON.stringify({
+          from: { address: env.MAIL_FROM || "hello@supersitecitizens.org" },
+          to: [{ email_address: { address: payload.to } }],
+          subject: payload.subject,
+          htmlbody: payload.html,
+          textbody: payload.text || payload.html.replace(/<[^>]*>/g, "")
+        })
+      });
+      if (response.ok) return { ok: true, provider, status: response.status };
 
-    return { ok: response.ok, provider, status: response.status };
+      const error = responseError(await response.text());
+      console.error("[mail:zeptomail] delivery failed", { to: payload.to, status: response.status, error });
+      return { ok: false, provider, status: response.status, error };
+    } catch (cause) {
+      const error = cause instanceof Error ? cause.message : "Unknown network error.";
+      console.error("[mail:zeptomail] delivery failed", { to: payload.to, error });
+      return { ok: false, provider, error };
+    }
   }
 
   console.info(`[mail:${provider}] ${payload.subject} -> ${payload.to}`);

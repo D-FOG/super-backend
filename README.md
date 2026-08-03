@@ -102,6 +102,20 @@ CLOUDINARY_API_SECRET=
 
 Use long, random JWT secrets in production.
 
+## Email Receipts
+
+Payment receipts are sent by the backend only after Flutterwave verification succeeds. Configure ZeptoMail with a verified sender address:
+
+```env
+MAIL_PROVIDER=zeptomail
+MAIL_FROM=payments@your-verified-domain.com
+ZEPTO_MAIL_ENDPOINT=https://api.zeptomail.com/v1.1/email
+ZEPTO_MAIL_AUTH_PREFIX=Zoho-enczapikey
+ZEPTO_MAIL_TOKEN=your-zeptomail-send-mail-token
+```
+
+When delivery fails, the backend logs the provider or network error and records `receiptLastAttemptAt` and `receiptError` on the payment. Payment success is never rolled back because a receipt cannot be delivered.
+
 ## CORS
 
 `CORS_ORIGIN` supports a single origin, multiple comma-separated origins, or `*`.

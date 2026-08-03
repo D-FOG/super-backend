@@ -3,6 +3,8 @@ import { z } from "zod";
 
 dotenv.config();
 
+const optionalUrl = z.preprocess((value) => value === "" ? undefined : value, z.string().url().optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(5000),
@@ -21,7 +23,7 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   MAIL_PROVIDER: z.enum(["placeholder", "zeptomail"]).default("placeholder"),
   MAIL_FROM: z.string().email().optional(),
-  ZEPTO_MAIL_ENDPOINT: z.string().url().optional(),
+  ZEPTO_MAIL_ENDPOINT: optionalUrl,
   ZEPTO_MAIL_AUTH_PREFIX: z.string().optional(),
   ZEPTO_MAIL_TOKEN: z.string().optional(),
   FLW_SECRET_KEY: z.string().optional(),
