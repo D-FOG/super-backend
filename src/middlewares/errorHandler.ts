@@ -29,6 +29,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     statusCode = 400;
     code = "VALIDATION_ERROR";
     message = "Invalid identifier supplied.";
+  } else if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) {
+    statusCode = 409;
+    code = "CONFLICT";
+    message = "Email is already registered.";
   } else if (err instanceof TokenExpiredError || err instanceof JsonWebTokenError) {
     statusCode = 401;
     code = "UNAUTHORIZED";

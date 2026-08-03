@@ -85,9 +85,8 @@ router.post(
   validate(loginSchema),
   asyncHandler(async (req, res) => {
     const user = await User.findOne({ email: req.body.email }).select("+password +refreshTokenHash");
-    if (!user || !(await user.comparePassword(req.body.password))) {
-      throw new ApiError(401, "Invalid email or password.", "INVALID_CREDENTIALS");
-    }
+    if (!user) throw new ApiError(401, "No account was found for this email address.", "EMAIL_NOT_FOUND");
+    if (!(await user.comparePassword(req.body.password))) throw new ApiError(401, "The password is incorrect.", "INVALID_PASSWORD");
     const tokens = await issueTokens(user as AuthUserShape);
     sendSuccess(res, "Login successful.", { user: authUser(user), ...tokens });
   })
